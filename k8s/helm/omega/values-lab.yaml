@@ -1,0 +1,9 @@
+global:
+  environment: lab
+  imageRegistry: harbor.omega.local
+backend:
+  replicas: 2
+frontend:
+  replicas: 1
+worker:
+  replicas: 2
