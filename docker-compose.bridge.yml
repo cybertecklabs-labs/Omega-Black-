@@ -1,70 +1,90 @@
-version: '3.8'
+version: "3.9"
 
 services:
-  # ═══════════════════════════════════════════════════════════════════════════
-  # SOVEREIGN BRIDGE GATEWAY
-  # ═══════════════════════════════════════════════════════════════════════════
-
   cortex-gateway:
-    build:
-      context: ./backend
-    container_name: omega-bridge-gateway
-    ports:
-      - "5001:5000"
+    image: ghcr.io/cybertecklabs/omega-black-cortex-gateway:bridge
+    container_name: omega-cortex-gateway
+    restart: unless-stopped
+    env_file:
+      - .env.bridge
     environment:
-      - NODE_ENV=production
-      - MONGO_URI=mongodb://mongodb:27017/omega_bridge
-      - REDIS_URL=redis://redis:6379
+      - PORT=8080
+      - PUBLIC_API_BASE_URL=${PUBLIC_API_BASE_URL}
       - JWT_SECRET=${JWT_SECRET}
-      - BRIDGE_MODE=true
-      - INTERNAL_LAB_URL=${INTERNAL_LAB_URL}
+      - JWT_ISSUER=${JWT_ISSUER}
+      - JWT_AUDIENCE=${JWT_AUDIENCE}
+      - TEMPORAL_ADDRESS=temporal-bridge-worker:7233
+      - MEMORY_BANK_GRPC_URL=pgvector-sync:50051
+      - TUNNEL_PUBLIC_HOST=${TUNNEL_PUBLIC_HOST}
+    ports:
+      - "8080:8080"
+    depends_on:
+      - temporal-bridge-worker
+      - pgvector-sync
     networks:
-      - omega-bridge-network
-
-  # ═══════════════════════════════════════════════════════════════════════════
-  # DISTRIBUTED WORKFLOW BRIDGE
-  # ═══════════════════════════════════════════════════════════════════════════
+      - sovereign-bridge
 
   temporal-bridge-worker:
-    build:
-      context: ./backend
-    container_name: omega-temporal-bridge
-    command: npm run start:worker
+    image: ghcr.io/cybertecklabs/omega-temporal-bridge-worker:bridge
+    container_name: omega-temporal-bridge-worker
+    restart: unless-stopped
+    env_file:
+      - .env.bridge
     environment:
-      - TEMPORAL_ADDRESS=${TEMPORAL_LAB_ADDRESS:-lab-temporal.local:7233}
-      - TEMPORAL_NAMESPACE=${TEMPORAL_NAMESPACE:-omega-lab}
-      - REDIS_URL=redis://redis:6379
+      - TEMPORAL_NAMESPACE=${TEMPORAL_NAMESPACE}
+      - TEMPORAL_TASK_QUEUE=${TEMPORAL_TASK_QUEUE}
+      - LAB_TEMPORAL_HOST=${LAB_TEMPORAL_HOST}
+      - LAB_TEMPORAL_PORT=${LAB_TEMPORAL_PORT}
+    volumes:
+      - ./secrets/lab-temporal:/secrets/lab-temporal:ro
     networks:
-      - omega-bridge-network
-
-  # ═══════════════════════════════════════════════════════════════════════════
-  # INTELLIGENCE SYNC AGENT
-  # ═══════════════════════════════════════════════════════════════════════════
+      - sovereign-bridge
 
   pgvector-sync:
-    image: alpine:latest
-    container_name: omega-vector-sync
-    command: >
-      sh -c "while true; do 
-        echo 'Syncing vector memory from lab...';
-        sleep 3600; 
-      done"
+    image: ghcr.io/cybertecklabs/omega-black-pgvector-sync:bridge
+    container_name: omega-pgvector-sync
+    restart: unless-stopped
+    env_file:
+      - .env.bridge
+    environment:
+      - PUBLIC_PGVECTOR_URL=${PUBLIC_PGVECTOR_URL}
+      - PUBLIC_PGVECTOR_DB=${PUBLIC_PGVECTOR_DB}
+      - PUBLIC_PGVECTOR_USER=${PUBLIC_PGVECTOR_USER}
+      - PUBLIC_PGVECTOR_PASSWORD=${PUBLIC_PGVECTOR_PASSWORD}
+      - LAB_PGVECTOR_URL=${LAB_PGVECTOR_URL}
+      - LAB_PGVECTOR_DB=${LAB_PGVECTOR_DB}
+      - LAB_PGVECTOR_USER=${LAB_PGVECTOR_USER}
+      - LAB_PGVECTOR_PASSWORD=${LAB_PGVECTOR_PASSWORD}
+      - SYNC_SCHEDULE=${SYNC_SCHEDULE:-0 */1 * * *}
+      - SYNC_DIRECTION=${SYNC_DIRECTION:-lab-to-public}
     networks:
-      - omega-bridge-network
+      - sovereign-bridge
 
-  # ═══════════════════════════════════════════════════════════════════════════
-  # SECURE TUNNEL (CLOUDFLARE / CILIUM)
-  # ═══════════════════════════════════════════════════════════════════════════
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: omega-bridge-monitor
+    restart: unless-stopped
+    volumes:
+      - ./ops/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    networks:
+      - sovereign-bridge
 
   tunnel:
     image: cloudflare/cloudflared:latest
-    container_name: omega-secure-tunnel
-    command: tunnel --no-autoupdate run
+    container_name: omega-bridge-tunnel
+    restart: unless-stopped
+    env_file:
+      - .env.bridge
+    command: tunnel run --protocol http2 ${TUNNEL_NAME}
     environment:
-      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+    depends_on:
+      - cortex-gateway
     networks:
-      - omega-bridge-network
+      - sovereign-bridge
 
 networks:
-  omega-bridge-network:
+  sovereign-bridge:
     driver: bridge

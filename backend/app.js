@@ -12,6 +12,47 @@ connectDB();
 
 const app = express();
 
+
+// 🔭 Observability: Prometheus Metrics
+const client = require('prom-client');
+const registry = new client.Registry();
+client.collectDefaultMetrics({ register: registry });
+
+const requests = new client.Counter({
+    name: 'bridge_requests_total',
+    help: 'Total bridge requests',
+    labelNames: ['status', 'route'],
+});
+registry.registerMetric(requests);
+
+const latency = new client.Histogram({
+    name: 'bridge_latency_seconds',
+    help: 'Bridge request latency',
+    labelNames: ['route'],
+    buckets: [0.1, 0.5, 1, 3, 5],
+});
+registry.registerMetric(latency);
+
+// Metrics Middleware
+app.use((req, res, next) => {
+    if (req.path === '/metrics') return next();
+    const end = latency.startTimer({ route: req.path });
+    res.on('finish', () => {
+        requests.inc({
+            status: res.statusCode,
+            route: req.path,
+        });
+        end();
+    });
+    next();
+});
+
+// Expose Metrics Endpoint (protected in production by Firewall/Tunnel, open for bridge)
+app.get('/metrics', async (req, res) => {
+    res.set('Content-Type', registry.contentType);
+    res.end(await registry.metrics());
+});
+
 // Rate Limiting
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
