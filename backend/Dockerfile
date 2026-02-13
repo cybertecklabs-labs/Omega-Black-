@@ -10,7 +10,11 @@ RUN apk add --no-cache curl ca-certificates unzip bash && \
 
 WORKDIR /app
 COPY package*.json ./
-RUN npm install
+RUN npm config set fetch-retries 5 \
+    && npm config set fetch-retry-mintimeout 20000 \
+    && npm config set fetch-retry-maxtimeout 120000 \
+    && npm install --production --no-audit
+
 COPY . .
 EXPOSE 5000
 CMD ["npm", "start"]

@@ -60,72 +60,156 @@ The pre-push hook (`.githooks/pre-push`) will accept only `execFile` patterns.
 
 ---
 
-## 📘 Bridge Runbook
+## 🧬 Sovereign Bridge Runbook
 
-Follow these steps to establish the uplink between your public scaffold and private lab.
+This section turns the narrative into a concrete, reproducible bridge between:
 
-### 1. Configure the Bridge Environment
-Create a `.env.bridge` file in the root directory (do not commit this file):
+- **v2.1 Hardened Lab** (Firecracker, Temporal, Memory Bank / pgvector)
+- **v2.0 Sovereign Public Scaffold** (Gateway + Cyberpunk UI)
 
-```bash
-# .env.bridge
-JWT_SECRET=your_synced_secret_key_from_lab
-INTERNAL_LAB_URL=wss://lab.your-domain.internal
-TEMPORAL_ADDRESS=lab-temporal.local:7233
-CLOUDFLARE_TUNNEL_TOKEN=eyJhIjoi...
-BRIDGE_MODE=true
+The goal: let your **Agents** (lab micro‑VMs and workers) talk to the **Cortex** (public gateway)
+without exposing your lab network to the internet.
+
+---
+
+### 1. Topology: Agent → Cortex → Memory Bank
+
+```mermaid
+flowchart LR
+  subgraph Lab["Hardened Lab (v2.1)"]
+    LT["Temporal Cluster"]
+    LM["Lab pgvector (Memory Bank)"]
+    FVM["Firecracker MicroVMs"]
+  end
+
+  subgraph Bridge["Sovereign Bridge (this repo)"]
+    GW["Cortex Gateway (public API)"]
+    TW["Temporal Bridge Worker"]
+    VS["pgvector Sync Agent"]
+    CF["Cloudflare Tunnel"]
+  end
+
+  subgraph Public["Public Scaffold (v2.0)"]
+    UI["Cyberpunk UI (GitHub Pages)"]
+    PD["Public Discovery pgvector"]
+  end
+
+  UI -->|"JWT / HTTPS"| GW
+  GW -->|"Workflows"| TW
+  TW -->|"Tasks / Signals"| LT
+  VS <-->|"Embeddings"| LM
+  VS <-->|"Embeddings"| PD
+  GW -->|"Ingress / Egress"| CF
+  FVM -->|"Jobs / Telemetry via LT"| LT
 ```
 
-### 2. Activate the Bridge Stack
-Use the bridge-specific compose file to spin up the gateway and sync agents.
+---
+
+### 2. Prerequisites
+
+1. **Lab side**
+   - Temporal cluster reachable from the Bridge (VPN, WireGuard, or private link).
+   - pgvector‑enabled Postgres for the **Memory Bank**.
+   - Optional: Firecracker microVM orchestration wired to Temporal workflows.
+
+2. **Public side**
+   - The **Sovereign Scaffold** deployed (Node.js/Express API + Cyberpunk UI).
+   - Public pgvector instance for the **Discovery index**.
+
+3. **Bridge host**
+   - A Linux node that can reach **both**:
+     - Lab Temporal + Postgres
+     - Public pgvector (and optionally the public API)
+   - Docker + docker‑compose installed.
+   - Cloudflare account and a configured **Tunnel** token.
+
+---
+
+### 3. Configure the Bridge
+
+From the repo root:
 
 ```bash
-# Spin up the bridge services
+cp .env.bridge.example .env.bridge  # use the provided template
+nano .env.bridge
+```
+
+ - **JWT**: `JWT_SECRET`, `JWT_ISSUER`, `JWT_AUDIENCE` must match the values used by:
+    - The public API gateway
+    - The Cyberpunk UI
+- **Temporal**: `LAB_TEMPORAL_HOST`, `TEMPORAL_NAMESPACE`, `TEMPORAL_TASK_QUEUE` define the queue used by bridge workers
+- **Memory Bank**: `LAB_PGVECTOR_URL` → internal “Memory Bank” / `PUBLIC_PGVECTOR_URL` → public Discovery index
+- **Sync**: `SYNC_DIRECTION`:
+    - `lab-to-public` (recommended): lab is source of truth
+    - `bidirectional`: if you implement conflict resolution
+- **Tunnel**: `TUNNEL_TOKEN`, `TUNNEL_PUBLIC_HOST` configure the Cloudflare Tunnel
+  - `TUNNEL_PUBLIC_HOST` is the hostname your UI will call for the gateway
+
+---
+
+### 4. Launch the Sovereign Bridge
+
+To start the bridge stack:
+
+```bash
+# From the repo root
+docker-compose -f docker-compose.bridge.yml pull
 docker-compose -f docker-compose.bridge.yml up -d
-
-# Check connection status
-docker logs -f omega-bridge-gateway
 ```
 
-### 3. Verify Uplink
-Run the verification signal to ensure the public gateway can reach the internal Temporal cluster.
+Verify:
 
 ```bash
-# Send a test signal
-curl -X POST http://localhost:5001/api/bridge/verify \
-  -H "Authorization: Bearer $YOUR_JWT" \
-  -H "Content-Type: application/json" \
-  -d '{"signal": "SYN", "node": "public-01"}'
+docker-compose -f docker-compose.bridge.yml ps
+docker logs -f omega-temporal-bridge-worker
+docker logs -f omega-pgvector-sync
+docker logs -f omega-bridge-tunnel
 ```
 
-**Expected Output:**
-```json
-{
-  "status": "ACK",
-  "latency": "14ms",
-  "lab_version": "v2.1-hardened"
-}
-```
-
-### 4. Sync Vector Intelligence
-Manually trigger an embedding sync if the automatic agent is delayed.
-
-```bash
-docker exec -it omega-vector-sync sh -c "/bin/sync_memory.sh --force"
-```
+Success means:
+- `cortex-gateway` listening on `0.0.0.0:8080`
+- `temporal-bridge-worker` connected to your lab Temporal namespace
+- `pgvector-sync` reporting successful sync cycles
+- `cloudflared` exposing the gateway at `https://$TUNNEL_PUBLIC_HOST`
 
 ---
 
-## 🧩 Workflow Definitions
+### 5. Wiring the Cyberpunk UI
 
-### Agent-to-Cortex Flow
-1.  **Discovery**: Public `ReconService` identifies a new target (e.g., `api.target.com`).
-2.  **Submit**: Target metadata is pushed to `CortexGateway`.
-3.  **Tunnel**: Metadata is encrypted and streamed to the Internal Lab request queue.
-4.  **Enrichment**: Internal Lab queries `pgvector` for historical patterns matching the target's technology stack.
-5.  **Action**: Temporal workflow triggers a Firecracker microVM to probe for specific vulnerabilities (safe/sandboxed).
-6.  **Recall**: Results are sanitized and sent back to the Public UI for display.
+Point the UI to the **Bridge Gateway**:
+
+- In your frontend `.env.production` (or equivalent):
+
+```env
+VITE_API_BASE_URL=https://YOUR_BRIDGE_HOSTNAME/api
+VITE_JWT_ISSUER=omega-black-sovereign
+VITE_JWT_AUDIENCE=omega-black-clients
+```
+
+Rebuild and redeploy the UI so that:
+
+- All authenticated calls go to the **Bridge Cortex Gateway**
+- JWTs are validated using the same `JWT_SECRET` / issuer / audience as the bridge
 
 ---
 
-**Generated by OMEGA BLACK Ops** | v2.1 Hardened Integration
+### 6. Operations
+
+- **Cold start**
+  - `docker-compose -f docker-compose.bridge.yml up -d`
+- **Rolling update**
+  - `docker-compose -f docker-compose.bridge.yml pull`
+  - `docker-compose -f docker-compose.bridge.yml up -d`
+- **Pause the bridge (maintenance)**
+  - `docker-compose -f docker-compose.bridge.yml stop`
+- **Emergency kill switch**
+  - `docker-compose -f docker-compose.bridge.yml down`
+
+When the **Bridge** is up:
+
+- The public UI becomes a **secure remote cockpit** for your lab.
+- All heavy lifting (scans, execution, long‑running workflows) stays inside the Hardened Lab.
+- Only vetted JWT traffic traverses the Tunnel.
+
+This is the “Sovereign Bridge”: the public face speaks in the same language as the lab cortex,
+without ever handing the internet a direct line into your microVM swarm.

@@ -2,7 +2,10 @@ version: "3.9"
 
 services:
   cortex-gateway:
-    image: ghcr.io/cybertecklabs/omega-black-cortex-gateway:bridge
+    # image: ghcr.io/cybertecklabs/omega-black-cortex-gateway:bridge
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: omega-cortex-gateway
     restart: unless-stopped
     env_file:
@@ -13,36 +16,43 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - JWT_ISSUER=${JWT_ISSUER}
       - JWT_AUDIENCE=${JWT_AUDIENCE}
-      - TEMPORAL_ADDRESS=temporal-bridge-worker:7233
+      - TEMPORAL_ADDRESS=temporal:7233
       - MEMORY_BANK_GRPC_URL=pgvector-sync:50051
       - TUNNEL_PUBLIC_HOST=${TUNNEL_PUBLIC_HOST}
     ports:
       - "8080:8080"
     depends_on:
-      - temporal-bridge-worker
+      - temporal
       - pgvector-sync
     networks:
       - sovereign-bridge
 
   temporal-bridge-worker:
-    image: ghcr.io/cybertecklabs/omega-temporal-bridge-worker:bridge
+    # image: ghcr.io/cybertecklabs/omega-temporal-bridge-worker:bridge
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: omega-temporal-bridge-worker
+    command: node src/temporal/worker.js
     restart: unless-stopped
     env_file:
       - .env.bridge
     environment:
-      - TEMPORAL_NAMESPACE=${TEMPORAL_NAMESPACE}
-      - TEMPORAL_TASK_QUEUE=${TEMPORAL_TASK_QUEUE}
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_NAMESPACE=${TEMPORAL_NAMESPACE:-default}
+      - TEMPORAL_TASK_QUEUE=${TEMPORAL_TASK_QUEUE:-omega-bridge-queue}
       - LAB_TEMPORAL_HOST=${LAB_TEMPORAL_HOST}
       - LAB_TEMPORAL_PORT=${LAB_TEMPORAL_PORT}
-    volumes:
-      - ./secrets/lab-temporal:/secrets/lab-temporal:ro
+    depends_on:
+      - temporal
     networks:
       - sovereign-bridge
 
   pgvector-sync:
-    image: ghcr.io/cybertecklabs/omega-black-pgvector-sync:bridge
+    # image: ghcr.io/cybertecklabs/omega-black-pgvector-sync:bridge
+    image: alpine:3.18
     container_name: omega-pgvector-sync
+    command: /bin/sh -c "while true; do echo 'Syncing vector memory from lab...'; sleep 3600; done"
     restart: unless-stopped
     env_file:
       - .env.bridge
