@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background Gradient -->
+    <rect width="1200" height="630" fill="url(#bg-grad)"/>
+    <defs>
+        <radialGradient id="bg-grad">
+            <stop offset="0.2" stop-color="#1a1a2e"/>
+            <stop offset="1" stop-color="#0a0a0a"/>
+        </radialGradient>
+        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#2dd4bf" stroke-width="0.5" stroke-opacity="0.1"/>
+        </pattern>
+    </defs>
+    <rect width="1200" height="630" fill="url(#grid)"/>
+    
+    <!-- Hero Text -->
+    <text x="600" y="280" text-anchor="middle" font-family="'Rajdhani', sans-serif" font-weight="900" font-size="120" fill="#fff" filter="url(#glow)">
+        OMEGA <tspan fill="#8b5cf6">BLACK</tspan>
+    </text>
+    
+    <!-- Tagline -->
+    <text x="600" y="360" text-anchor="middle" font-family="'Inter', sans-serif" font-weight="500" font-size="36" fill="#a78bfa" letter-spacing="4">
+        SOVEREIGN INTELLIGENCE PLATFORM v2.0
+    </text>
+    
+    <!-- Feature Pills -->
+    <g transform="translate(300, 480)">
+        <rect x="0" y="0" width="180" height="60" rx="30" fill="#2dd4bf" fill-opacity="0.2" stroke="#2dd4bf"/>
+        <text x="90" y="40" text-anchor="middle" font-family="monospace" fill="#fff">Auto-Recon</text>
+    </g>
+    <g transform="translate(510, 480)">
+        <rect x="0" y="0" width="180" height="60" rx="30" fill="#ec4899" fill-opacity="0.2" stroke="#ec4899"/>
+        <text x="90" y="40" text-anchor="middle" font-family="monospace" fill="#fff">AI Neural</text>
+    </g>
+    <g transform="translate(720, 480)">
+        <rect x="0" y="0" width="180" height="60" rx="30" fill="#8b5cf6" fill-opacity="0.2" stroke="#8b5cf6"/>
+        <text x="90" y="40" text-anchor="middle" font-family="monospace" fill="#fff">Sovereign</text>
+    </g>
+</svg>

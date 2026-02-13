@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <radialGradient id="neural-glow">
+            <stop offset="0.5" stop-color="#8b5cf6" stop-opacity="0.8"/>
+            <stop offset="1" stop-color="#0a0a0a" stop-opacity="0"/>
+        </radialGradient>
+        <filter id="icon-glow">
+            <feGaussianBlur stdDeviation="6" result="coloredBlur"/>
+            <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+        </filter>
+    </defs>
+    
+    <!-- Deep Black Base -->
+    <rect width="512" height="512" rx="128" fill="#0a0a0a"/>
+    <circle cx="256" cy="256" r="200" fill="url(#neural-glow)"/>
+    
+    <!-- Central Brain Node -->
+    <circle cx="256" cy="256" r="48" fill="#fff" filter="url(#icon-glow)">
+        <animate attributeName="r" values="46;50;46" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    
+    <!-- Omega Halo -->
+    <path d="M128 360H200V320C200 280 230 240 256 240C282 240 312 280 312 320V360H384" 
+          stroke="#ec4899" stroke-width="24" stroke-linecap="round" fill="none"/>
+    
+    <!-- Circuit Connections -->
+    <line x1="256" y1="208" x2="256" y2="128" stroke="#8b5cf6" stroke-width="16" stroke-linecap="round"/>
+    <circle cx="256" cy="112" r="16" fill="#8b5cf6"/>
+</svg>
