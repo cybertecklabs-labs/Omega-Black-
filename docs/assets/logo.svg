@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <!-- Cyber Gradient -->
+        <linearGradient id="cyber-grad" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+            <stop offset="0.2" stop-color="#00f3ff"/>
+            <stop offset="0.8" stop-color="#00ff41"/>
+        </linearGradient>
+        
+        <!-- Inner Glow Filter -->
+        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="4" result="blur"/>
+            <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+        </filter>
+
+        <!-- Strong Edge Filter -->
+        <filter id="hard-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="0" stdDeviation="8" flood-color="#00f3ff" flood-opacity="0.8"/>
+            <feDropShadow dx="0" dy="0" stdDeviation="16" flood-color="#00f3ff" flood-opacity="0.4"/>
+        </filter>
+    </defs>
+
+    <!-- Background Void (Optional, remove for transparency) -->
+    <!-- <rect width="512" height="512" fill="#050510"/> -->
+
+    <g filter="url(#hard-glow)">
+        <!-- The OMEGA Core (Stylized, Angular) -->
+        <path d="M128 400H192V360C192 360 192 320 192 320C192 284 220 256 256 256C292 256 320 284 320 320C320 320 320 360 320 360V400H384V340C384 270 326 212 256 212C186 212 128 270 128 340V400Z" 
+              stroke="url(#cyber-grad)" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        
+        <!-- Top Arc completes the Omega -->
+        <path d="M168 280C168 280 180 180 256 180C332 180 344 280 344 280" 
+              stroke="url(#cyber-grad)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="20 40 60" opacity="0.8"/>
+        
+        <!-- Circuit Traces (Left) -->
+        <path d="M128 340H80V300L110 270" stroke="#00f3ff" stroke-width="4" opacity="0.6"/>
+        <circle cx="80" cy="300" r="4" fill="#00f3ff"/>
+
+        <!-- Circuit Traces (Right) -->
+        <path d="M384 340H432V300L402 270" stroke="#00f3ff" stroke-width="4" opacity="0.6"/>
+        <circle cx="432" cy="300" r="4" fill="#00f3ff"/>
+
+        <!-- Data Points -->
+        <circle cx="256" cy="180" r="6" fill="#00ff41"/>
+        <circle cx="256" cy="300" r="8" fill="none" stroke="#00f3ff" stroke-width="2"/>
+        <circle cx="256" cy="300" r="3" fill="#00f3ff"/>
+    </g>
+</svg>
