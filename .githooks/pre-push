@@ -1,0 +1,6 @@
+#!/bin/bash
+# OMEGA BLACK Pre-push Hook
+# Installation: cp .githooks/pre-push .git/hooks/pre-push && chmod +x .git/hooks/pre-push
+
+echo "🛡️ OMEGA BLACK: Running Pre-push Validation..."
+./scripts/ensure-production.sh

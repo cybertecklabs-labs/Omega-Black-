@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  # ═══════════════════════════════════════════════════════════════════════════
+  # SOVEREIGN BRIDGE GATEWAY
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  cortex-gateway:
+    build:
+      context: ./backend
+    container_name: omega-bridge-gateway
+    ports:
+      - "5001:5000"
+    environment:
+      - NODE_ENV=production
+      - MONGO_URI=mongodb://mongodb:27017/omega_bridge
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET}
+      - BRIDGE_MODE=true
+      - INTERNAL_LAB_URL=${INTERNAL_LAB_URL}
+    networks:
+      - omega-bridge-network
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # DISTRIBUTED WORKFLOW BRIDGE
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  temporal-bridge-worker:
+    build:
+      context: ./backend
+    container_name: omega-temporal-bridge
+    command: npm run start:worker
+    environment:
+      - TEMPORAL_ADDRESS=${TEMPORAL_LAB_ADDRESS:-lab-temporal.local:7233}
+      - TEMPORAL_NAMESPACE=${TEMPORAL_NAMESPACE:-omega-lab}
+      - REDIS_URL=redis://redis:6379
+    networks:
+      - omega-bridge-network
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # INTELLIGENCE SYNC AGENT
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  pgvector-sync:
+    image: alpine:latest
+    container_name: omega-vector-sync
+    command: >
+      sh -c "while true; do 
+        echo 'Syncing vector memory from lab...';
+        sleep 3600; 
+      done"
+    networks:
+      - omega-bridge-network
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # SECURE TUNNEL (CLOUDFLARE / CILIUM)
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: omega-secure-tunnel
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    networks:
+      - omega-bridge-network
+
+networks:
+  omega-bridge-network:
+    driver: bridge

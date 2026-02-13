@@ -4,23 +4,40 @@
 [![Kubernetes](https://img.shields.io/badge/Kubernetes-Native-326CE5?logo=kubernetes)](https://kubernetes.io)
 [![AI](https://img.shields.io/badge/AI-LLM%20Powered-FF6F00)](https://github.com/topics/ai-security)
 
-## Overview
+## Architecture Overview (Sovereign Grid)
 
-OMEGA BLACK is an **AI-native vulnerability research platform** designed for autonomous security analysis, distributed reconnaissance, and LLM-assisted exploitation workflows. Built on a **self-hosted, sovereign deployment model**, it provides researchers, red teams, and security labs with a production-grade framework for offensive security automation.
+```mermaid
+graph TD
+    UI[Cyberpunk UI - React/Vite] --> API[API Gateway - Node.js/Express]
+    API --> DB[MongoDB Aggregator]
+    API --> AI[AI Engine - Gemini/Ollama]
+    API --> Bridge[Sovereign Bridge v2.1]
+    
+    subgraph "Hardened Internal Lab"
+        Bridge --- Tunnel[Cloudflare/Cilium Tunnel]
+        Tunnel --- Temporal[Temporal Workflows]
+        Tunnel --- Firecracker[Firecracker MicroVMs]
+        Tunnel --- Vector[Memory Bank - pgvector]
+    end
+```
 
-**Core Design Principles:**
-- **AI-first architecture**: LLM-powered analysis and decision-making
-- **Distributed scanning**: Kubernetes-native horizontal scaling
-- **Modular workflows**: Pluggable recon, exploitation, and intelligence engines
-- **Sovereign deployment**: Full air-gap capability with local LLM inference
-- **Data sovereignty**: Complete control over reconnaissance intelligence
+**Component Breakdown:**
+- **Frontend**: React-based cyberpunk UI with Vite and Redux Toolkit.
+- **API Layer**: Node.js/Express with hardened `execFile` contract.
+- **Sovereign Bridge**: Secure tunnel connecting public UI to private lab resources.
+- **Memory Bank**: pgvector-backed semantic memory for exploit pattern recall.
 
-**Primary Use Cases:**
-- Autonomous bug bounty research
-- Red team automation laboratories
-- AI-native SOC experimentation
-- Cybersecurity training environments
-- Academic security research
+---
+
+## 🌉 Sovereign Bridge (v2.1)
+
+OMEGA BLACK is designed to bridge the gap between public discovery and private exploitation. The **Sovereign Bridge** allows you to securely connect this public scaffold to your **v2.1 Hardened Lab**:
+
+- **Agent-to-Cortex Flow**: Recon findings from the public grid are tunneled back to the lab AI for deep analysis.
+* **Durable Execution**: Firecracker sandboxes are triggered via Temporal workflows across the bridge.
+- **Privacy via Isolation**: Sensitive exploit evidence remains in the lab; only metadata is synced to the dashboard.
+
+See [INTEGRATION.md](INTEGRATION.md) for full bridge configuration.
 
 ---
 
