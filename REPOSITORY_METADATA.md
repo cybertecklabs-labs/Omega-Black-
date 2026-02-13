@@ -38,8 +38,9 @@ Add these topics to maximize discoverability:
 - `vulnerability-research`
 
 ### Technical Topics
-- `fastapi`
-- `nextjs`
+- `express`
+- `vite`
+- `mongodb`
 - `temporal`
 - `ollama`
 - `cilium`

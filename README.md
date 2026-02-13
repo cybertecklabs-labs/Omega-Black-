@@ -58,14 +58,14 @@ If you believe in AI-driven autonomous security research and open innovation in 
 ```
 ┌─────────────┐      ┌──────────────┐      ┌─────────────┐
 │   Frontend  │─────▶│  API Gateway │─────▶│  AI Engine  │
-│  (Next.js)  │      │   (FastAPI)  │      │  (Gemini/   │
+│ (React/Vite)│      │(Express/Node)│      │  (Gemini/   │
 └─────────────┘      └──────────────┘      │   Ollama)   │
                               │             └─────────────┘
                               │                    │
                               ▼                    ▼
                      ┌──────────────┐      ┌─────────────┐
-                     │  PostgreSQL  │      │   Redis     │
-                     │  (TimescaleDB)│     │  (Cache)    │
+                     │   MongoDB    │      │   Redis     │
+                     │ (Aggregator) │      │  (Cache)    │
                      └──────────────┘      └─────────────┘
                               │
                               ▼
@@ -79,10 +79,10 @@ If you believe in AI-driven autonomous security research and open innovation in 
 ```
 
 **Component Breakdown:**
-- **Frontend**: React-based cyberpunk UI with real-time dashboards
-- **API Layer**: FastAPI with async workers and WebSocket support
+- **Frontend**: React-based cyberpunk UI with Vite and Redux Toolkit
+- **API Layer**: Node.js/Express with async middleware and JWT authentication
 - **AI Engine**: Multi-model LLM orchestration (Gemini, Ollama, local inference)
-- **Database**: PostgreSQL with TimescaleDB for time-series metrics
+- **Database**: MongoDB for flexible scan results and persistent evidence storage
 - **Orchestration**: Temporal for distributed workflow execution
 - **Storage**: Longhorn for replicated persistent volumes
 
@@ -173,22 +173,23 @@ Detailed deployment guide: [DEPLOYMENT.md](DEPLOYMENT.md)
 ## Roadmap
 
 ### Phase 1: Core Platform (✅ Complete)
-- [x] FastAPI backend with async workers
-- [x] Next.js frontend with cyberpunk UI
-- [x] PostgreSQL + Redis integration
-- [x] Basic recon automation
+- [x] Node.js/Express backend with JWT
+- [x] React/Vite/Redux frontend with cyberpunk UI
+- [x] MongoDB + Redis integration
+- [x] Docker & Kubernetes manifests
 
-### Phase 2: AI Integration (🚧 In Progress)
-- [x] Gemini API integration
-- [x] Ollama local LLM support
-- [ ] Multi-model orchestration
-- [ ] Reinforcement learning for recon optimization
+### Phase 2: AI & Hardening (✅ Verified in v2.1 Lab)
+- [x] Gemini & Ollama orchestration
+- [x] **Scope Guard** service for safe scanning
+- [x] **Zero-Knowledge Encryption** for evidence
+- [x] **Firecracker microVM** sandboxing for exploit PoC
 
-### Phase 3: Advanced Features (📋 Planned)
-- [ ] Vector memory for historical intelligence
-- [ ] Advanced reporting engine with PDF export
-- [ ] Threat intelligence correlation (MISP, OpenCTI)
-- [ ] Collaborative workspace for teams
+### Phase 3: Intelligence & Scaling (✅ Verified in v2.1 Lab)
+- [x] **Vector Memory** (pgvector) for pattern recall
+- [x] **Temporal Orchestration** for durable recon
+- [x] **Live Bounty Analytics** & wealth alerts
+- [ ] Multi-region scanning grid
+- [ ] Collaborative red-team workspaces
 
 ### Phase 4: Research Extensions (🔬 Future)
 - [ ] Adversarial AI testing framework

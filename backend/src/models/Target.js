@@ -13,6 +13,7 @@ const targetSchema = new mongoose.Schema({
         default: 'active'
     },
     metadata: {
+        status: String,
         subdomains: [String],
         technologies: [String],
         lastRecon: Date,

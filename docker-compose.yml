@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: omega-backend
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - MONGO_URI=mongodb://mongodb:27017/omega_black
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET:-omega_black_secret}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - OLLAMA_BASE_URL=http://ollama:11434
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - omega-network
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: omega-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_BASE_URL=http://localhost:5000/api
+    depends_on:
+      - backend
+    networks:
+      - omega-network
+
+  mongodb:
+    image: mongo:latest
+    container_name: omega-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - omega-network
+
+  redis:
+    image: redis:alpine
+    container_name: omega-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - omega-network
+
+  n8n:
+    image: n8nio/n8n
+    container_name: omega-n8n
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=omega
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - omega-network
+
+networks:
+  omega-network:
+    driver: bridge
+
+volumes:
+  mongo_data:
+  n8n_data:

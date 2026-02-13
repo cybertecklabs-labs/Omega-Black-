@@ -13,15 +13,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/python-version@v5
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          python-version: '3.11'
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: backend/package.json
       - name: Install dependencies
         run: |
           cd backend
-          pip install -r requirements.txt
+          npm install
+      - name: Run linting
+        run: |
+          cd backend
+          # npm run lint
       - name: Run tests
         run: |
           cd backend
-          # pytest # Uncomment once tests are added
+          # npm test

@@ -14,14 +14,26 @@ exports.createTarget = async (req, res, next) => {
     } catch (error) { next(error); }
 };
 
+const reconService = require('../services/reconService');
+
 exports.startRecon = async (req, res, next) => {
     try {
         const target = await Target.findById(req.params.id);
         if (!target) return res.status(404).json({ success: false, error: 'Target not found' });
-        // In production: trigger async job (BullMQ, n8n, etc.)
+
+        // Asynchronously start recon
+        target.metadata.status = 'scanning';
         target.metadata.lastRecon = new Date();
         await target.save();
-        res.status(202).json({ success: true, message: 'Recon started', jobId: 'mock-job-id' });
+
+        // Perform recon (in a real production app, this would be a background task)
+        reconService.runSubfinder(target.domain).then(subdomains => {
+            target.metadata.subdomains = subdomains;
+            target.metadata.status = 'completed';
+            target.save();
+        });
+
+        res.status(202).json({ success: true, message: 'Reconnaissance initiated', targetId: target._id });
     } catch (error) { next(error); }
 };
 
